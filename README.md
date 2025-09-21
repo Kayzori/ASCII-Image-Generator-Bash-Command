@@ -10,4 +10,5 @@ Simply provide an image path, and it will generate ASCII output in the console o
 ## Usage
 
 ```bash
-ascii_image_generator.exe -p <path> [-o <output>] [-s <width>] [--help] [--version]
+ascii -p <path> [-o <output>] [-s <width>] [--help] [--version]
+
