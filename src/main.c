@@ -27,20 +27,25 @@ char* get_input_dir_path(const char* input) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: %s [-p <path>] [-o <output>] [-s <width>] [--help] [--version]\n", argv[0]);
+        printf("Usage: %s [-p <path>] [-o <output>] [-s <scale>] [-r <ramp>] [-invert] [--help] [--version]\n", argv[0]);
         return 1;
     }
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--help") == 0) {
             printf("ASCII Image Generator %s\n", VERSION);
-            printf("Usage: %s [-p <path>] [-o <output>] [-s <width>] [--help] [--version]\n", argv[0]);
-            printf("Options:\n");
-            printf("  -p <path>      Input image path (required)\n");
-            printf("  -o <output>    Output text file (optional, relative to input image if relative path)\n");
-            printf("  -s <width>     Output width in characters (optional, default 120)\n");
-            printf("  --help         Show this help message\n");
-            printf("  --version      Show program version\n");
+            printf("Usage: %s [-p <path>] [-o <output>] [-s <scale>] [-r <ramp>] [-invert] [--help] [--version]\n", argv[0]);
+            printf("Options:\n\n");
+            printf("  -p <path>      Input image path (required)\n\n");
+            printf("  -o <output>    Output text file (optional, relative to input image if relative path)\n\n");
+            printf("  -s <scale>     Output scale\n\n");
+            printf("  -r <ramp>      ASCII ramp (optional, default 1)\n");
+            printf("                 0: low brightness ramp ( -*@)\n");
+            printf("                 1: simple brightness ramp ( .:-=+*%%#@)\n");
+            printf("                 2: high brightness ramp ( .'`^\",:;IIl!i<>~+_-?][}{1)(|\\/tfjrxnruvczYXUOJUCQL0Owmqpdbkhdah*#MW8%%B@$)\n\n");
+            printf("  -invert        Invert ASCII mapping\n\n");
+            printf("  --help         Show this help message\n\n");
+            printf("  --version      Show program version\n\n");
             return 0;
         } else if (strcmp(argv[i], "--version") == 0) {
             printf("%s\n", VERSION);
@@ -50,15 +55,24 @@ int main(int argc, char *argv[]) {
 
     char *path = NULL;
     char *out = NULL;
-    int out_width = 0; // 0 = auto (default 120)
+    float scale = 1.0f; // scale factor (1 = default)
+    ASCII_RAMP ramp = RAMP_SIMPLE;
+    int invert = 0;
 
     // --- Parse arguments ---
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) path = argv[++i];
         else if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) out = argv[++i];
         else if (strcmp(argv[i], "-s") == 0 && i + 1 < argc) {
-            out_width = atoi(argv[++i]);
-            if (out_width < 1) out_width = 1;
+            scale = (float)(atof(argv[++i]));
+            if (scale < 1) scale = 1;
+        } else if (strcmp(argv[i], "-r") == 0 && i + 1 < argc) {
+            int r = atoi(argv[++i]);
+            if (r == 0) ramp = RAMP_LOW;
+            else if (r == 1) ramp = RAMP_SIMPLE;
+            else ramp = RAMP_HIGH;
+        } else if (strcmp(argv[i], "-invert") == 0) {
+            invert = 1;
         }
     }
 
@@ -76,10 +90,9 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Loaded image: %s (%dx%d, %d channels)\n", path, width, height, channels);
-    if (out_width == 0) out_width = 120;
 
     // --- Convert image to ASCII ---
-    char* ascii = image_to_ascii(data, width, height, channels, out_width);
+    char* ascii = image_to_ascii(data, width, height, channels, scale, ramp, invert);
     if (!ascii) {
         printf("Failed to convert image to ASCII.\n");
         stbi_image_free(data);
@@ -109,7 +122,6 @@ int main(int argc, char *argv[]) {
         _splitpath_s(full_out, drive, sizeof(drive), dir, sizeof(dir), NULL, 0, NULL, 0);
         _makepath_s(parent, sizeof(parent), drive, dir, NULL, NULL);
 
-        // Recursively create directories
         char current[_MAX_PATH] = {0};
         char temp[_MAX_PATH];
         strcpy_s(temp, sizeof(temp), parent);
