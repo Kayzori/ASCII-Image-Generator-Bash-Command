@@ -11,4 +11,9 @@ Simply provide an image path, and it will generate ASCII output in the console o
 
 ```bash
 ascii -p <path> [-o <output>] [-s <width>] [--help] [--version]
+```
+---
+## How To Setup To Windows Command Prompts
+
+After you compile the code add the executable on envirement system variables
 
